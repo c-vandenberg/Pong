@@ -15,7 +15,7 @@ function Ball:init(x, y, width, height)
 end
 
 --[[
-    Method to apply collision detection to rectangles (paddles and ball)
+    Define collision detection method for rectangles (paddles and ball)
 ]]
 
 function Ball:collides(box)
@@ -33,7 +33,7 @@ function Ball:collides(box)
 end
 
 --[[
-    Method to place the ball in the middle of the screen, with an intiial random velocity on both axes
+   Define method to place the ball in the middle of the screen, with an intiial random velocity on both axes
 ]]
 
 function Ball:reset()
@@ -51,7 +51,7 @@ function Ball:reset()
 end
 
 --[[
-    Method to apply velocity to positiob, scaled by dt
+    Define method to apply velocity to positiob, scaled by dt
 ]]
 
 function Ball:update(dt)
