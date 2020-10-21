@@ -67,7 +67,8 @@ function love.update(dt)
 
     paddle1:update(dt)
     paddle2:update(dt)
-
+    
+    -- Collision detection
     if ball:collides(paddle1) then
         -- Deflect ball to the right
         ball.dx = -ball.dx
