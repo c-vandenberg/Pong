@@ -1,5 +1,9 @@
 Ball = Class{}
 
+--[[ 
+    Initliase Ball class attributes. Paddle takes x and y for positioning, as well as width and height for its dimensions
+]]
+
 function Ball:init(x, y, width, height)
     self.x = x
     self.y = y
