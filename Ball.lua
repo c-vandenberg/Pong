@@ -11,7 +11,7 @@ function Ball:init(x, y, width, height)
 end
 
 --[[
-    Places the ball in the middle of the screen, with an intiial random velocity on both axes
+    Define method that places the ball in the middle of the screen, with an intiial random velocity on both axes
 ]]
 
 function Ball:reset()
@@ -29,7 +29,7 @@ function Ball:reset()
 end
 
 --[[
-    Apply velocity to positiob, scaled by dt
+    Define method that applies velocity to position, scaled by dt
 ]]
 
 function Ball:update(dt)
