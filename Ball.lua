@@ -51,7 +51,7 @@ function Ball:reset()
 end
 
 --[[
-    Define method to apply velocity to positiob, scaled by dt
+    Define method to apply velocity to position, scaled by dt
 ]]
 function Ball:update(dt)
     self.x = self.x + self.dx * dt
