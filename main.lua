@@ -310,7 +310,8 @@ function love.draw()
 
     -- Render pong right 'paddle'
     paddle2:render()
-
+    
+    -- Render current FPS on screen
     displayFPS()
 
     
