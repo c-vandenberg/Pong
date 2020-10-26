@@ -46,7 +46,8 @@ function love.load()
     sounds = {
         ['paddle_hit'] = love.audio.newSource('paddle-hit.wav', 'static'),
         ['point_scored'] = love.audio.newSource('point-scored.wav', 'static'),
-        ['wall_hit'] = love.audio.newSource('wall-hit.wav', 'static')
+        ['wall_hit'] = love.audio.newSource('wall-hit.wav', 'static'),
+        ['main_theme'] = love.audio.newSource('Tetris.mp3', 'static')
     }
 
     -- Initialise our virtual raster/virtual resolution, which will be rendered within our actual window no matter it's dimensions. 
@@ -81,7 +82,8 @@ function love.load()
         ball.dx = - 100
     end
 
-    gameState = 'start'
+    gameState = 'menu'
+
 end
 
 -- Maintain aspect ratio on window resizing
@@ -94,7 +96,49 @@ end
 ]]
 function love.update(dt)
 
-    if gameState == 'play' then
+    -- AI starting game serve
+    if gameState == 'PvCserve' and servingPlayer == 2 then
+        love.keypressed('space')
+    end
+
+    -- AI controlled player 2 paddle movement
+    if gameState == 'PvCplay' then
+        if paddle2.y > ((ball.y + ball.height / 2)) and ball.x > VIRTUAL_WIDTH / 2 then
+            paddle2.dy = -PADDLE_SPEED + 115
+        elseif paddle2.y + paddle2.height < ((ball.y + ball.height / 2)) and ball.x > VIRTUAL_WIDTH / 2
+        then
+            paddle2.dy = PADDLE_SPEED - 115
+        else
+            paddle2.dy = 0
+        end
+        
+        -- Ensure AI serves
+        if servingPlayer == 2 then
+            love.keypressed('space')
+        end
+    end
+
+    -- Player controlled player 2 paddle movement
+    if gameState == 'PvPplay' then
+
+        -- Add radius around AI controlled paddle 2
+
+        -- Player 2 paddle movement
+        -- Add negative paddle speed to current y-coordinate scaled by dt for upward movement
+        if love.keyboard.isDown('up') then
+            paddle2.dy = -PADDLE_SPEED
+
+        -- Add positive paddle speed to current y-coordinate scaled by dt for downward movement
+        elseif love.keyboard.isDown('down') then
+            paddle2.dy = PADDLE_SPEED
+
+        -- If keys aren't pressed paddle 2 velocity = 0
+        else
+            paddle2.dy = 0
+        end
+    end
+
+    if gameState == 'PvPplay' or gameState == 'PvCplay' then
 
         -- Paddle 1 collision detection
         if ball:collides(paddle1) then
@@ -105,8 +149,8 @@ function love.update(dt)
 
             -- Paddle collision sound effect
             sounds['paddle_hit']:play()
+        
         end
-
         -- Paddle 2 collision detection
         if ball:collides(paddle2) then
 
@@ -116,8 +160,8 @@ function love.update(dt)
 
             -- Paddle collision sound effect
             sounds['paddle_hit']:play()
-        end
 
+        end
         --  Top of screen collision detection
         if ball.y <= 0 then
 
@@ -163,7 +207,11 @@ function love.update(dt)
 
             else
                 -- Continue game if flase
-                gameState = 'serve'
+                if gameState == 'PvPplay' then
+                    gameState = 'PvPserve'
+                elseif gameState == 'PvCplay' then
+                    gameState = 'PvCserve'
+                end
             end
         end
 
@@ -189,8 +237,12 @@ function love.update(dt)
                 winner = 'Player 2'
 
             else
-                -- Continue game if false
-                gameState = 'serve'
+                -- Continue game if flase
+                if gameState == 'PvPplay' then
+                    gameState = 'PvPserve'
+                elseif gameState == 'PvCplay' then
+                    gameState = 'PvCserve'
+                end
             end
         end
 
@@ -209,33 +261,20 @@ function love.update(dt)
         
         end
 
-        -- Player 2 paddle movement
-        -- Add negative paddle speed to current y-coordinate scaled by dt for upward movement
-        if love.keyboard.isDown('up') then
-            paddle2.dy = -PADDLE_SPEED
-
-        -- Add positive paddle speed to current y-coordinate scaled by dt for downward movement
-        elseif love.keyboard.isDown('down') then
-            paddle2.dy = PADDLE_SPEED
-
-        -- If keys aren't pressed paddle 2 velocity = 0
-        else
-            paddle2.dy = 0
-        end
-
-        -- Update ball when game state = play
-        if gameState == 'play' then
+        -- Set ball velocity when game state switches to play
+        -- Remember we need to multiply all updates by dx to ensure consistent movement rendering no matter framerate
+        if gameState == 'PvPplay' or gameState == 'PvCplay' then
             ball:update(dt)
         end
 
-        -- Update paddes
         paddle1:update(dt)
-        paddle2:update(dt)       
+        paddle2:update(dt)
+        
     end
 end
 
 --[[
-    Keyboard handling, called by LÖVE each frame; passes in the key pressed
+    Keyboard handling, called by LÖVE each frame; passes in the key we pressed so we can access
 ]]
 function love.keypressed(key)
 
@@ -244,18 +283,35 @@ function love.keypressed(key)
         love.event.quit()
     end
     
+    -- User chooses game mode
+    if key == '1' then 
+        if gameState == 'menu' then
+            gameState = 'PvPstart'
+        end
+    end
+
+    if key == '2' then
+        if gameState == 'menu' then
+            gameState = 'PvCstart'
+        end
+    end
+
     -- Change game state to 'serve' or 'play' when user presses space key depending on current game state
     if key == 'space' then
-        if gameState == 'start' then 
-            gameState = 'serve'
-        elseif gameState == 'serve' then
-            gameState = 'play'
+        if gameState == 'PvPstart' then 
+            gameState = 'PvPserve'
+        elseif gameState == 'PvPserve' then
+            gameState = 'PvPplay'
+        elseif gameState == 'PvCstart' then
+            gameState = 'PvCserve'
+        elseif gameState == 'PvCserve' then
+            gameState = 'PvCplay'
 
-        -- If game state = victory when reset players scores and restart game
+        -- If game state = victory then reset players scores and restart game
         elseif gameState == 'victory' then
             player1Score = 0
             player2Score = 0
-            gameState = 'start'
+            gameState = 'menu'
         end
     end
 end
@@ -272,17 +328,29 @@ function love.draw()
     -- Have to divide RGB value by 255 because LÖVE treats each value as 0.0 - 1.0 to map the values 0 - 255
     love.graphics.clear(40 / 255, 45 / 255, 52 / 255, 255 / 255)
 
+    love.graphics.setFont(victoryFont)
+
+    if gameState == 'menu' then
+        love.graphics.printf('Welcome to Pong!', 0, 20, VIRTUAL_WIDTH, 'center')
+
+        love.graphics.setFont(smallFont)
+
+        love.graphics.printf('Please Chooose a Mode', 0, 52, VIRTUAL_WIDTH, 'center')
+        love.graphics.printf('1. Player vs Player', 0, 72, VIRTUAL_WIDTH, 'center')
+        love.graphics.printf('2. Player vs Computer', 0, 92, VIRTUAL_WIDTH, 'center')
+    end
+
 
     -- Set small font object
     love.graphics.setFont(smallFont)
 
     -- Render welcome message when game state = start
-    if gameState == 'start' then
+    if gameState == 'PvPstart' or gameState == 'PvCstart' then
         love.graphics.printf('Welcome to Pong!', 0, 20, VIRTUAL_WIDTH, 'center')
         love.graphics.printf('Press Space to Play', 0, 32, VIRTUAL_WIDTH, 'center')
     
     -- Render message to show which player is serving
-    elseif gameState == 'serve' then
+    elseif gameState == 'PvPserve' or gameState == 'PvCserve' then
         love.graphics.printf("Player " .. tostring(servingPlayer) .. "'s turn!", 0, 20, VIRTUAL_WIDTH, 'center')
         love.graphics.printf('Press Space to Serve', 0, 32, VIRTUAL_WIDTH, 'center')
 
@@ -299,20 +367,21 @@ function love.draw()
     love.graphics.setFont(scoreFont)
 
     -- Render players scores
-    love.graphics.print(player1Score, VIRTUAL_WIDTH / 2 - 50, VIRTUAL_HEIGHT / 3)
-    love.graphics.print(player2Score, VIRTUAL_WIDTH / 2 + 30, VIRTUAL_HEIGHT / 3)
+    if gameState ~= 'menu' then
+        love.graphics.print(player1Score, VIRTUAL_WIDTH / 2 - 50, VIRTUAL_HEIGHT / 3)
+        love.graphics.print(player2Score, VIRTUAL_WIDTH / 2 + 30, VIRTUAL_HEIGHT / 3)
 
-    -- Render Pong 'ball'
-    ball:render()
+        -- Render Pong 'ball'
+        ball:render()
 
-    -- Render pong left 'paddle'
-    paddle1:render()
+        -- Render pong left 'paddle'
+        paddle1:render()
 
-    -- Render pong right 'paddle'
-    paddle2:render()
-    
-    -- Render current FPS on screen
-    displayFPS()
+        -- Render pong right 'paddle'
+        paddle2:render()
+
+        displayFPS()
+    end
 
     
     -- End rendering to virtual raster/end rendering at virtual resolution
